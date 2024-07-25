@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import pickle
 import numpy as np
+from fastapi.middleware.cors import CORSMiddleware
 
 # Load the vectorizer and model
 vectorizer = pickle.load(open('vectorizer.pkl', 'rb'))
@@ -9,6 +10,15 @@ model = pickle.load(open('model.pkl', 'rb'))
 
 # Initialize FastAPI
 app = FastAPI()
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Allow your frontend's origin
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
+)
 
 
 # Define request model
@@ -62,5 +72,3 @@ def predict(message: Message):
 @app.get("/")
 def read_root():
     return {"message": "Spam detection API is up and running!"}
-
-
