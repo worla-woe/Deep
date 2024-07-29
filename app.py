@@ -38,7 +38,7 @@ def get_num_characters(text: str) -> int:
 
 
 # Endpoint to make predictions
-@app.get("/predict", response_model=dict)
+@app.post("/predict", response_model=dict)
 def predict(message: Message):
     try:
         # Log incoming request
