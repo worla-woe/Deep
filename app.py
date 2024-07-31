@@ -77,7 +77,7 @@ def extract_features(text):
 
 
 # Endpoint to make predictions
-@app.get("/predict", response_model=PredictionResponse)
+@app.post("/predict", response_model=PredictionResponse)
 def predict(request: Request):
     try:
         # Log incoming request
