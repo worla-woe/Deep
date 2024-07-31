@@ -9,4 +9,4 @@ scikit-learn
 wordcloud
 imblearn
 joblib
-pickle5
+pickle
