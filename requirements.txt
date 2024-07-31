@@ -7,8 +7,6 @@ seaborn
 nltk
 scikit-learn
 wordcloud
-classification_report
-pydantic
-requests
-python-multipart
-jupyter
+imblearn
+joblib
+pickle5
