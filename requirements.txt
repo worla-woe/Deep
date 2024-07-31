@@ -1,11 +1,10 @@
-fastapi
-uvicorn
 pandas
 numpy
+scikit-learn
+nltk
 matplotlib
 seaborn
-nltk
-scikit-learn
 wordcloud
 imblearn
-joblib
+fastapi
+uvicorn
