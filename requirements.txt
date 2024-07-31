@@ -6,6 +6,10 @@ seaborn
 nltk
 scikit-learn
 wordcloud
+re
+string
+SMOTE
+classification_report
 imblearn
 xgboost
 pickle-mixin
