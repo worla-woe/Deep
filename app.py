@@ -80,22 +80,17 @@ def extract_features(text):
 @app.post("/predict", response_model=PredictionResponse)
 def predict(request: Request):
     try:
-        # Log incoming request
         print(f"Incoming request: {request}")
 
-        # Preprocess the text
         processed_text = transform_text(request.text)
+        print(f"Processed text: {processed_text}")
 
-        # Extract features
         features = extract_features(processed_text)
-
-        # Log features for debugging
         print(f"Extracted features: {features}")
 
-        # Vectorize the transformed text
         transformed_text = vectorizer.transform([processed_text])
+        print(f"Transformed text shape: {transformed_text.shape}")
 
-        # Ensure correct number of features
         expected_vector_length = 3200
         feature_array_length = expected_vector_length + len(features)
 
@@ -105,28 +100,24 @@ def predict(request: Request):
                 f"but got {feature_array_length}"
             )
 
-        # Combine transformed text with extracted features
         feature_array = np.hstack((transformed_text.toarray(),
                                    np.array(features).reshape(1, -1)))
+        print(f"Feature array shape: {feature_array.shape}")
 
-        # Make prediction using the model
         prediction_proba = model.predict_proba(feature_array)[0]
         prediction = model.predict(feature_array)[0]
 
-        # Convert prediction to human-readable label
         label = "spam" if prediction == 1 else "ham"
         confidence = prediction_proba[prediction]
 
-        # Return prediction and confidence as JSON response
         return {"prediction": label, "confidence": confidence}
     except HTTPException as e:
+        print(f"HTTP Exception: {e.detail}")
         raise e
     except ValueError as e:
         print(f"Value Error: {e}")
-        raise HTTPException(status_code=400,
-                            detail=f"Feature dimension error: {e}")
+        raise HTTPException(status_code=400, detail=f"Feature dimension error: {e}")
     except Exception as e:
-        # Log the exception for debugging
         print(f"Error occurred: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
