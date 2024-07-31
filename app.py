@@ -35,8 +35,8 @@ class Request(BaseModel):
 
 
 # Function to transform the email text
-def transform_text(text):
-    text = text.lower()
+def transform_text(emailText):
+    text = emailText.lower()
     text = nltk.word_tokenize(text)
     filtered_words = [word for word in text if word.isalnum()]
     stop_words = set(nltk.corpus.stopwords.words('english'))
@@ -103,7 +103,6 @@ def predict(request: Request):
             raise ValueError(
                 f"Feature dimension mismatch. Expected 3201 "
                 f"but got {feature_array_length}"
-
             )
 
         # Combine transformed text with extracted features
@@ -129,11 +128,11 @@ def predict(request: Request):
     except Exception as e:
         # Log the exception for debugging
         print(f"Error occurred: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error") 
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 # Root endpoint to verify the API is working
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to the PhishGuard API"
+    return {"message": "Welcome to the PhishGuard API."
             'Use the /predict endpoint to make predictions.'}
