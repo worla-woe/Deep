@@ -6,7 +6,6 @@ seaborn
 nltk
 scikit-learn
 wordcloud
-re
 string
 classification_report
 imblearn
