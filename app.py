@@ -8,6 +8,15 @@ import string
 from fastapi.middleware.cors import CORSMiddleware
 
 
+def download_nltk_data():
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        nltk.download('punkt')
+
+download_nltk_data()
+
+
 class PredictionResponse(BaseModel):
     prediction: str
     confidence: float
