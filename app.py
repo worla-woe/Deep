@@ -7,11 +7,17 @@ import re
 import string
 from fastapi.middleware.cors import CORSMiddleware
 
+def download_nltk_data():
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        nltk.download('punkt', download_dir='/usr/share/nltk_data')
+
+download_nltk_data()
 
 class PredictionResponse(BaseModel):
     prediction: str
     confidence: float
-
 
 # Load the vectorizer and model
 vectorizer = pickle.load(open('vectorizer.pkl', 'rb'))
@@ -28,11 +34,9 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
-
 # Define request model
 class Request(BaseModel):
     text: str
-
 
 # Function to transform the email text
 def transform_text(emailText):
@@ -40,9 +44,7 @@ def transform_text(emailText):
     text = nltk.word_tokenize(text)
     filtered_words = [word for word in text if word.isalnum()]
     stop_words = set(nltk.corpus.stopwords.words('english'))
-    return " ".join(word for word in filtered_words if word not in
-                    stop_words and word not in string.punctuation)
-
+    return " ".join(word for word in filtered_words if word not in stop_words and word not in string.punctuation)
 
 # Function to extract features
 def extract_features(text):
@@ -51,20 +53,14 @@ def extract_features(text):
     punctuation_count = sum(1 for char in text if char in string.punctuation)
 
     # Calculate average word length safely
-    average_word_length = (
-        np.mean([len(word) for word in text.split()]) if word_count > 0 else 0
-    )
+    average_word_length = np.mean([len(word) for word in text.split()]) if word_count > 0 else 0
 
     capital_letter_count = sum(1 for char in text if char.isupper())
     special_character_count = len(re.findall(r'[^a-zA-Z0-9\s]', text))
 
     # Keywords (can be adjusted based on your needs)
-    keywords = [
-        'free', 'winner', 'urgent', 'money', 'click', 'buy',
-        # ... (rest of your keywords)
-    ]
-    keyword_presence = [1 if keyword in text.lower() else 0 for
-                        keyword in keywords]
+    keywords = ['free', 'winner', 'urgent', 'money', 'click', 'buy']
+    keyword_presence = [1 if keyword in text.lower() else 0 for keyword in keywords]
 
     # Aggregate features into a single value
     combined_feature = (
@@ -74,7 +70,6 @@ def extract_features(text):
     )
 
     return [combined_feature]
-
 
 # Endpoint to make predictions
 @app.post("/predict", response_model=PredictionResponse)
@@ -101,8 +96,7 @@ def predict(request: Request):
 
         if feature_array_length != 3201:
             raise ValueError(
-                f"Feature dimension mismatch. Expected 3201 "
-                f"but got {feature_array_length}"
+                f"Feature dimension mismatch. Expected 3201 but got {feature_array_length}"
             )
 
         # Combine transformed text with extracted features
@@ -123,16 +117,13 @@ def predict(request: Request):
         raise e
     except ValueError as e:
         print(f"Value Error: {e}")
-        raise HTTPException(status_code=400,
-                            detail=f"Feature dimension error: {e}")
+        raise HTTPException(status_code=400, detail=f"Feature dimension error: {e}")
     except Exception as e:
         # Log the exception for debugging
         print(f"Error occurred: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
-
 # Root endpoint to verify the API is working
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to the PhishGuard API."
-            'Use the /predict endpoint to make predictions.'}
+    return {"message": "Welcome to the PhishGuard API. Use the /predict endpoint to make predictions."}
