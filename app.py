@@ -5,8 +5,9 @@ import numpy as np
 import re
 import string
 from fastapi.middleware.cors import CORSMiddleware
-import nltk
 from nltk.corpus import stopwords
+import nltk
+from nltk.corpus import WordNetLemmatizer
 import logging
 
 # Download the 'punkt' tokenizer data
@@ -40,12 +41,22 @@ class Request(BaseModel):
     text: str
 
 # Function to transform the email text
-def transform_text(emailText):
-    text = emailText.lower()
+def transform_text(text):
+    text = text.lower()
     text = nltk.word_tokenize(text)
-    filtered_words = [word for word in text if word.isalnum()]
-    stop_words = set(nltk.corpus.stopwords.words('english'))
-    return " ".join(word for word in filtered_words if word not in stop_words and word not in string.punctuation)
+    y=[]
+    for i in text:
+        if i.isalnum():
+            y.append(i)
+    
+    text =y[:]
+    y.clear()
+    
+    for i in text:
+        if i not in stopwords.words('english') and i not in string.punctuation:
+            y.append(lemmatizer.lemmatize(i))
+            
+    return " ".join(y)
 
 # Function to extract features
 def extract_features(text):
