@@ -10,8 +10,11 @@ import nltk
 from nltk.corpus import WordNetLemmatizer
 import logging
 
-# Download the 'punkt' tokenizer data
-nltk.download('stopwords', download_dir='/opt/render/nltk_data')
+nltk.download('punkt')
+nltk.download('wordnet')
+nltk.download('stopwords')
+
+lemmatizer = WordNetLemmatizer()
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
