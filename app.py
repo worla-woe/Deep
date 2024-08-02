@@ -8,6 +8,10 @@ from fastapi.middleware.cors import CORSMiddleware
 import nltk
 import logging
 
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 class PredictionResponse(BaseModel):
     prediction: str
     confidence: float
@@ -25,17 +29,14 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://phishing-detection-react-e95c9.web.app"],
-    # Allow your frontend's origin
     allow_credentials=True,
     allow_methods=["*"],  # Allow all methods
     allow_headers=["*"],  # Allow all headers
 )
 
-
 # Define request model
 class Request(BaseModel):
     text: str
-
 
 # Function to transform the email text
 def transform_text(emailText):
@@ -43,9 +44,7 @@ def transform_text(emailText):
     text = nltk.word_tokenize(text)
     filtered_words = [word for word in text if word.isalnum()]
     stop_words = set(nltk.corpus.stopwords.words('english'))
-    return " ".join(word for word in filtered_words if word not in
-                    stop_words and word not in string.punctuation)
-
+    return " ".join(word for word in filtered_words if word not in stop_words and word not in string.punctuation)
 
 # Function to extract features
 def extract_features(text):
@@ -66,8 +65,7 @@ def extract_features(text):
         'free', 'winner', 'urgent', 'money', 'click', 'buy',
         # ... (rest of your keywords)
     ]
-    keyword_presence = [1 if keyword in text.lower() else 0 for
-                        keyword in keywords]
+    keyword_presence = [1 if keyword in text.lower() else 0 for keyword in keywords]
 
     # Aggregate features into a single value
     combined_feature = (
@@ -78,13 +76,12 @@ def extract_features(text):
 
     return [combined_feature]
 
-
 # Endpoint to make predictions
 @app.post("/predict", response_model=PredictionResponse)
 def predict(request: Request):
     try:
         # Log incoming request
-        print(f"Incoming request: {request}")
+        logger.info(f"Incoming request: {request}")
 
         # Preprocess the text
         processed_text = transform_text(request.text)
@@ -93,7 +90,7 @@ def predict(request: Request):
         features = extract_features(processed_text)
 
         # Log features for debugging
-        print(f"Extracted features: {features}")
+        logger.info(f"Extracted features: {features}")
 
         # Vectorize the transformed text
         transformed_text = vectorizer.transform([processed_text])
@@ -104,13 +101,11 @@ def predict(request: Request):
 
         if feature_array_length != 3201:
             raise ValueError(
-                f"Feature dimension mismatch. Expected 3201 "
-                f"but got {feature_array_length}"
+                f"Feature dimension mismatch. Expected 3201 but got {feature_array_length}"
             )
 
         # Combine transformed text with extracted features
-        feature_array = np.hstack((transformed_text.toarray(),
-                                   np.array(features).reshape(1, -1)))
+        feature_array = np.hstack((transformed_text.toarray(), np.array(features).reshape(1, -1)))
 
         # Make prediction using the model
         prediction_proba = model.predict_proba(feature_array)[0]
@@ -123,36 +118,17 @@ def predict(request: Request):
         # Return prediction and confidence as JSON response
         return {"prediction": label, "confidence": confidence}
     except HTTPException as e:
+        logger.error(f"HTTP Exception: {e}")
         raise e
     except ValueError as e:
-        print(f"Value Error: {e}")
-        raise HTTPException(status_code=400,
-                            detail=f"Feature dimension error: {e}")
+        logger.error(f"Value Error: {e}")
+        raise HTTPException(status_code=400, detail=f"Feature dimension error: {e}")
     except Exception as e:
         # Log the exception for debugging
-        print(f"Error occurred: {e}")
+        logger.error(f"Error occurred: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
-
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# In your endpoint
-logger.info(f"Incoming request: {request}")
-logger.info(f"Extracted features: {features}")
-
-# Handle exceptions
-except ValueError as e:
-    logger.error(f"Value Error: {e}")
-    raise HTTPException(status_code=400, detail=f"Feature dimension error: {e}")
-except Exception as e:
-    logger.error(f"Error occurred: {e}")
-    raise HTTPException(status_code=500, detail="Internal Server Error")
-
 
 # Root endpoint to verify the API is working
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to the PhishGuard API."
-            'Use the /predict endpoint to make predictions.'}
+    return {"message": "Welcome to the PhishGuard API. Use the /predict endpoint to make predictions."}
