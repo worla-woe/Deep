@@ -12,6 +12,8 @@ class PredictionResponse(BaseModel):
     prediction: str
     confidence: float
 
+# Download the 'punkt' tokenizer data
+nltk.download('punkt')
 
 # Load the vectorizer and model
 vectorizer = pickle.load(open('vectorizer.pkl', 'rb'))
