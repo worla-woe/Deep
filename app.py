@@ -8,6 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 import nltk
 import logging
 
+# Download the 'punkt' tokenizer data
+nltk.download('stopwords', download_dir='/opt/render/nltk_data')
+
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -15,9 +18,6 @@ logger = logging.getLogger(__name__)
 class PredictionResponse(BaseModel):
     prediction: str
     confidence: float
-
-# Download the 'punkt' tokenizer data
-nltk.download('punkt')
 
 # Load the vectorizer and model
 vectorizer = pickle.load(open('vectorizer.pkl', 'rb'))
