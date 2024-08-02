@@ -6,12 +6,6 @@ import re
 import string
 from fastapi.middleware.cors import CORSMiddleware
 import nltk
-# Ensure required NLTK resources are downloaded
-nltk.data.path.append('C:\\Users\\fenuk/nltk_data')
-try:
-    nltk.data.find('corpora/stopwords.zip')
-except LookupError:
-    nltk.download('stopwords')
 
 
 class PredictionResponse(BaseModel):
