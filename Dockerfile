@@ -9,7 +9,8 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 # Download NLTK data
-RUN python -c "import nltk; nltk.download('punkt')"
+RUN python -c "import nltk; nltk.download('stopwords', download_dir='/usr/share/nltk_data')"
+RUN python -c "import nltk; nltk.download('punkt', download_dir='/usr/share/nltk_data')"
 
 # Copy the application code
 COPY . .
@@ -21,4 +22,4 @@ ENV PORT=8000
 EXPOSE 8000
 
 # Run the application
-CMD ["uvicorn", "app:app", "--host", "127.0.0.1", "--port", "8000"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
