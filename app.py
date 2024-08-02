@@ -6,7 +6,7 @@ import re
 import string
 from fastapi.middleware.cors import CORSMiddleware
 import nltk
-
+import logging
 
 class PredictionResponse(BaseModel):
     prediction: str
@@ -132,6 +132,23 @@ def predict(request: Request):
         # Log the exception for debugging
         print(f"Error occurred: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# In your endpoint
+logger.info(f"Incoming request: {request}")
+logger.info(f"Extracted features: {features}")
+
+# Handle exceptions
+except ValueError as e:
+    logger.error(f"Value Error: {e}")
+    raise HTTPException(status_code=400, detail=f"Feature dimension error: {e}")
+except Exception as e:
+    logger.error(f"Error occurred: {e}")
+    raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
 # Root endpoint to verify the API is working
