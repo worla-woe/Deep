@@ -7,6 +7,7 @@ import string
 from fastapi.middleware.cors import CORSMiddleware
 import nltk
 nltk.download('punkt')
+nltk.download('stopwords')
 
 
 class PredictionResponse(BaseModel):
