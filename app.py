@@ -33,7 +33,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://phishing-detection-react-e95c9.web.app"],
+    allow_origins=["https://phishing-detection-react-e95c9.web.app", "https://phishing-detection-react-e95c9.web.app/home", "https://phishing-detection-react-e95c9.web.app/predict"],
     allow_credentials=True,
     allow_methods=["*"],  # Allow all methods
     allow_headers=["*"],  # Allow all headers
