@@ -7,7 +7,7 @@ import string
 from fastapi.middleware.cors import CORSMiddleware
 from nltk.corpus import stopwords
 import nltk
-from nltk.corpus import WordNetLemmatizer
+from nltk.stem import WordNetLemmatizer
 import logging
 
 nltk.download('punkt')
