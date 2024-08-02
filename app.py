@@ -147,3 +147,7 @@ def predict(request: Request):
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the PhishGuard API. Use the /predict endpoint to make predictions."}
+
+@app.head("/")
+async def head_root():
+    return {}
