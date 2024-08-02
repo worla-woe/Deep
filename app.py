@@ -6,6 +6,7 @@ import re
 import string
 from fastapi.middleware.cors import CORSMiddleware
 import nltk
+from nltk.corpus import stopwords
 import logging
 
 # Download the 'punkt' tokenizer data
