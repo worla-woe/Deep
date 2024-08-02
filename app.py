@@ -2,10 +2,11 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import pickle
 import numpy as np
-import nltk
 import re
 import string
 from fastapi.middleware.cors import CORSMiddleware
+import nltk
+nltk.download('punkt')
 
 
 class PredictionResponse(BaseModel):
