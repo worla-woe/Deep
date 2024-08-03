@@ -31,6 +31,10 @@ model = pickle.load(open('model.pkl', 'rb'))
 # Initialize FastAPI
 app = FastAPI()
 
+@app.get("/hello")
+def root():
+    return {"message": "Hello World"}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://phishing-detection-react-e95c9.web.app", "https://phishing-detection-react-e95c9.web.app/home", "https://phishing-detection-react-e95c9.web.app/predict","https://ella-161a4.firebaseapp.com/home","https://ella-161a4.web.app/home","https://ella-161a4.firebaseapp.com/predict","https://ella-161a4.web.app/predict","https://ella-161a4.web.app","https://ella-161a4.firebaseapp.com"],
