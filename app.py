@@ -1,4 +1,3 @@
-
 import re
 from fastapi import FastAPI, HTTPException
 import numpy as np
@@ -9,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from nltk.corpus import stopwords
 import nltk
 from nltk.stem import WordNetLemmatizer
+from bs4 import BeautifulSoup
 import logging
 
 nltk.download('punkt')
@@ -20,12 +20,6 @@ lemmatizer = WordNetLemmatizer()
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-class PredictionResponse(BaseModel):
-    prediction: str
-    confidence: float
-
 
 # Load the vectorizer and model
 vectorizer = pickle.load(open('vectorizer.pkl', 'rb'))
@@ -43,11 +37,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # Define request model
 class Request(BaseModel):
     text: str
+    is_html: bool = False  # Flag to indicate if the content is HTML
 
+# Function to extract text from HTML
+def extract_text_from_html(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    return soup.get_text()
 
 # Function to transform the email text
 def transform_text(text):
@@ -64,14 +62,10 @@ def transform_text(text):
             y.append(lemmatizer.lemmatize(i))
     return " ".join(y)
 
-
 # Function to calculate the number of sentences
 def count_sentences(text):
-    # Simple sentence split based on periods,exclamation marks,and qst marks
     sentences = re.split(r'[.!?]', text)
-    # Filter out any empty strings resulting from the split
     return len([s for s in sentences if s.strip()])
-
 
 # Endpoint to make predictions
 @app.post("/predict", response_model=PredictionResponse)
@@ -80,19 +74,24 @@ async def predict(request: Request):
         # Log incoming request
         logger.info(f"Incoming request: {request}")
 
+        # Extract text from HTML if needed
+        text_content = request.text
+        if request.is_html:
+            text_content = extract_text_from_html(request.text)
+
         # Preprocess the text
-        processed_text = transform_text(request.text)
+        processed_text = transform_text(text_content)
 
         # Log features for debugging
         logger.info(f"Extracted features: {processed_text}")
 
         # Vectorize the transformed text
         transformed_text = vectorizer.transform([processed_text])
-        # Extract the additional feature
-        num_characters = len(request.text)
-        num_words = len(request.text.split())
-        num_sentences = count_sentences(request.text)
-        # Combine transformed text with the additional feature
+        # Extract additional features
+        num_characters = len(text_content)
+        num_words = len(text_content.split())
+        num_sentences = count_sentences(text_content)
+        # Combine transformed text with additional features
         feature_array = np.hstack((
             transformed_text.toarray(), np.array(
                 [[num_characters, num_words, num_sentences]])))
@@ -120,13 +119,9 @@ async def predict(request: Request):
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 # Root endpoint to verify the API is working
-
-
 @app.get("/")
 def read_root():
-    return {'''"message": "Welcome to the PhishGuard API.
-            Use the /predict endpoint to make predictions."'''}
-
+    return {"message": "Welcome to the PhishGuard API. Use the /predict endpoint to make predictions."}
 
 @app.head("/")
 async def head_root():
