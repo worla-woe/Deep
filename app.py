@@ -21,6 +21,10 @@ lemmatizer = WordNetLemmatizer()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+class PredictionResponse(BaseModel):
+    prediction: str
+    confidence: float
+
 # Load the vectorizer and model
 vectorizer = pickle.load(open('vectorizer.pkl', 'rb'))
 model = pickle.load(open('model.pkl', 'rb'))
