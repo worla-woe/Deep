@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from nltk.corpus import stopwords
 import nltk
 from nltk.stem import WordNetLemmatizer
-from bs4 import BeautifulSoup
 import logging
 
 nltk.download('punkt')
@@ -44,12 +43,6 @@ app.add_middleware(
 # Define request model
 class Request(BaseModel):
     text: str
-    is_html: bool = False  # Flag to indicate if the content is HTML
-
-# Function to extract text from HTML
-def extract_text_from_html(html_content):
-    soup = BeautifulSoup(html_content, 'html.parser')
-    return soup.get_text()
 
 # Function to transform the email text
 def transform_text(text):
@@ -77,11 +70,6 @@ async def predict(request: Request):
     try:
         # Log incoming request
         logger.info(f"Incoming request: {request}")
-
-        # Extract text from HTML if needed
-        text_content = request.text
-        if request.is_html:
-            text_content = extract_text_from_html(request.text)
 
         # Preprocess the text
         processed_text = transform_text(text_content)
