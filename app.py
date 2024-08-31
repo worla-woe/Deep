@@ -28,11 +28,12 @@ class PredictionResponse(BaseModel):
 
 
 # Load the vectorizer and model
-vectorizer = pickle.load(open('vectorizer.pkl', 'rb'))
+vectorizer_model = pickle.load(open('vectorizer.pkl', 'rb'))
 model = pickle.load(open('model.pkl', 'rb'))
 
 # Initialize FastAPI
 app = FastAPI()
+
 
 @app.get("/hello")
 async def read_hello():
@@ -49,13 +50,13 @@ app.add_middleware(
 
 
 # Define request model
-class Request(BaseModel):
+class PredictionRequest(BaseModel):
     text: str
 
 
 # Function to transform the email text
-def transform_text(text):
-    text = text.lower()
+def transform_text(message_text):
+    text = message_text.lower()
     text = nltk.word_tokenize(text)
     y = []
     for i in text:
@@ -69,17 +70,9 @@ def transform_text(text):
     return " ".join(y)
 
 
-# Function to calculate the number of sentences
-def count_sentences(text):
-    # Simple sentence split based on periods,exclamation marks,and qst marks
-    sentences = re.split(r'[.!?]', text)
-    # Filter out any empty strings resulting from the split
-    return len([s for s in sentences if s.strip()])
-
-
 # Endpoint to make predictions
 @app.post("/predict", response_model=PredictionResponse)
-async def predict(request: Request):
+async def predict(request: PredictionRequest):
     try:
         # Log incoming request
         logger.info(f"Incoming request: {request}")
@@ -91,15 +84,21 @@ async def predict(request: Request):
         logger.info(f"Extracted features: {processed_text}")
 
         # Vectorize the transformed text
-        transformed_text = vectorizer.transform([processed_text])
+        transformed_text = vectorizer_model.transform([processed_text])
         # Extract the additional feature
         num_characters = len(request.text)
         num_words = len(request.text.split())
-        num_sentences = count_sentences(request.text)
-        # Combine transformed text with the additional feature
+        num_special_chars = len(re.findall(
+            r'[!@#$%^&*(),.?":{}|<>]', request.text))
+        capital_ratio = sum(1 for c in request.text if c.isupper()
+                            ) / num_characters if num_characters > 0 else 0
+        avg_word_length = np.mean([len(word) for word in request.text.split()]
+                                  ) if num_words > 0 else 0
+        # Combine transformed text with the additional features
         feature_array = np.hstack((
             transformed_text.toarray(), np.array(
-                [[num_characters, num_words, num_sentences]])))
+                [[num_characters, num_words, num_special_chars, capital_ratio,
+                  avg_word_length,]])))
 
         # Make prediction using the model
         prediction_proba = model.predict_proba(feature_array)[0]
@@ -123,11 +122,10 @@ async def predict(request: Request):
         logger.error(f"Error occurred: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
+
 # Root endpoint to verify the API is working
-
-
 @app.get("/")
-def read_root():
+def root_endpoint():
     return {'''"message": "Welcome to the PhishGuard API.
             Use the /predict endpoint to make predictions."'''}
 
