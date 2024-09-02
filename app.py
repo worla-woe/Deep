@@ -1,15 +1,12 @@
-
-import re
 from fastapi import FastAPI, HTTPException
-import numpy as np
 from pydantic import BaseModel
 import pickle
 import string
+import logging
 from fastapi.middleware.cors import CORSMiddleware
 from nltk.corpus import stopwords
 import nltk
 from nltk.stem import WordNetLemmatizer
-import logging
 
 nltk.download('punkt')
 nltk.download('wordnet')
@@ -27,9 +24,10 @@ class PredictionResponse(BaseModel):
     confidence: float
 
 
-# Load the vectorizer and model
-vectorizer_model = pickle.load(open('vectorizer.pkl', 'rb'))
-model = pickle.load(open('model.pkl', 'rb'))
+# Load the deployment pipeline and model
+with open('model.pkl', 'rb') as file:
+    model = pickle.load(file)
+
 
 # Initialize FastAPI
 app = FastAPI()
@@ -49,12 +47,10 @@ app.add_middleware(
 )
 
 
-# Define request model
 class PredictionRequest(BaseModel):
     text: str
+   
 
-
-# Function to transform the email text
 def transform_text(message_text):
     text = message_text.lower()
     text = nltk.word_tokenize(text)
@@ -70,7 +66,6 @@ def transform_text(message_text):
     return " ".join(y)
 
 
-# Endpoint to make predictions
 @app.post("/predict", response_model=PredictionResponse)
 async def predict(request: PredictionRequest):
     try:
@@ -83,27 +78,9 @@ async def predict(request: PredictionRequest):
         # Log features for debugging
         logger.info(f"Extracted features: {processed_text}")
 
-        # Vectorize the transformed text
-        transformed_text = vectorizer_model.transform([processed_text])
-        # Extract the additional feature
-        num_characters = len(request.text)
-        num_words = len(request.text.split())
-        num_special_chars = len(re.findall(
-            r'[!@#$%^&*(),.?":{}|<>]', request.text))
-        capital_ratio = sum(1 for c in request.text if c.isupper()
-                            ) / num_characters if num_characters > 0 else 0
-        avg_word_length = np.mean([len(word) for word in request.text.split()]
-                                  ) if num_words > 0 else 0
-        # Combine transformed text with the additional features
-        feature_array = np.hstack((
-            transformed_text.toarray(), np.array(
-                [[num_characters, num_words, num_special_chars, capital_ratio,
-                  avg_word_length,]])))
-
-        # Make prediction using the model
-        prediction_proba = model.predict_proba(feature_array)[0]
-        prediction = model.predict(feature_array)[0]
-
+        # Use the model pipeline to predict
+        prediction_proba = model.predict_proba([processed_text])[0]
+        prediction = model.predict([request.text])[0]
         # Convert prediction to human-readable label
         label = "spam" if prediction == 1 else "ham"
         confidence = prediction_proba[prediction]
@@ -118,16 +95,13 @@ async def predict(request: PredictionRequest):
         raise HTTPException(
             status_code=400, detail=f"Feature dimension error: {e}")
     except Exception as e:
-        # Log the exception for debugging
         logger.error(f"Error occurred: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
-# Root endpoint to verify the API is working
 @app.get("/")
 def root_endpoint():
-    return {'''"message": "Welcome to the PhishGuard API.
-            Use the /predict endpoint to make predictions."'''}
+    return {"message": "PhishGuard! Use the /predict endpoint for prediction."}
 
 
 @app.head("/")
